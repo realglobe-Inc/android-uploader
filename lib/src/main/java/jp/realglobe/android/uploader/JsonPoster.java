@@ -52,12 +52,15 @@ public class JsonPoster {
         private final URL url;
         private final int timeout;
         @NonNull
+        private final Consumer<Integer> onUpload;
+        @NonNull
         private final Consumer<Exception> onError;
 
-        JsonPostHandler(@NonNull Looper looper, @NonNull URL url, @Nullable Consumer<Exception> onError, int timeout) {
+        JsonPostHandler(@NonNull Looper looper, @NonNull URL url, @Nullable Consumer<Integer> onUpload, @Nullable Consumer<Exception> onError, int timeout) {
             super(looper);
             this.url = url;
             this.timeout = timeout;
+            this.onUpload = (onUpload != null ? onUpload : (Integer status) -> Log.v(TAG, "Upload resulted in " + status));
             this.onError = (onError != null ? onError : (Exception e) -> Log.e(TAG, "Post failed", e));
         }
 
@@ -66,7 +69,7 @@ public class JsonPoster {
             switch (msg.what) {
                 case MSG_POST: {
                     try {
-                        post(this.url, (Map) msg.obj, this.timeout);
+                        post(this.url, (Map) msg.obj, this.onUpload, this.timeout);
                     } catch (Exception e) {
                         this.onError.accept(e);
                     }
@@ -74,7 +77,7 @@ public class JsonPoster {
             }
         }
 
-        private static void post(@NonNull URL url, @NonNull Map data, int timeout) throws IOException {
+        private static void post(@NonNull URL url, @NonNull Map data, @NonNull Consumer<Integer> onFinish, int timeout) throws IOException {
             final String json = (new JSONObject(data)).toString();
             final byte[] bytes = json.getBytes();
             final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -88,7 +91,7 @@ public class JsonPoster {
                 try (final OutputStream reqBody = new BufferedOutputStream(connection.getOutputStream())) {
                     reqBody.write(bytes);
                 }
-                Log.v(TAG, "Posting " + json + " to " + url + " resulted in " + connection.getResponseCode());
+                onFinish.accept(connection.getResponseCode());
             } finally {
                 connection.disconnect();
             }
@@ -110,13 +113,14 @@ public class JsonPoster {
     private final JsonPostHandler handler;
 
     /**
-     * @param looper  スレッド
-     * @param url     POST 先 URL
-     * @param onError エラー時実行関数
-     * @param timeout 接続タイムアウト（ミリ秒）
+     * @param looper   スレッド
+     * @param url      POST 先 URL
+     * @param onUpload アップロード時実行関数。引数はレスポンスステータス
+     * @param onError  エラー時実行関数
+     * @param timeout  接続タイムアウト（ミリ秒）
      */
-    public JsonPoster(@NonNull Looper looper, @NonNull URL url, @Nullable Consumer<Exception> onError, int timeout) {
-        this.handler = new JsonPostHandler(looper, url, onError, timeout);
+    public JsonPoster(@NonNull Looper looper, @NonNull URL url, @NonNull Consumer<Integer> onUpload, @Nullable Consumer<Exception> onError, int timeout) {
+        this.handler = new JsonPostHandler(looper, url, onUpload, onError, timeout);
     }
 
     /**
