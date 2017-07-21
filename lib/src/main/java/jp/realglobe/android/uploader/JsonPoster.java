@@ -45,33 +45,128 @@ public class JsonPoster {
     private static final String CONTENT_TYPE = "Content-Type";
     private static final String CONTENT_TYPE_JSON = "application/json";
 
+    private static final int DEFAULT_TIMEOUT = 30_000; // ミリ秒
+
+    /**
+     * POST する内容
+     */
+    public static class Entry {
+
+        private final URL url;
+        private final Map<String, Object> data;
+        private final Consumer<Integer> onFinish;
+        private final Consumer<Exception> onError;
+        private final int timeout;
+
+        private Entry(@NonNull URL url, @NonNull Map<String, Object> data, @NonNull Consumer<Integer> onFinish, @NonNull Consumer<Exception> onError, int timeout) {
+            this.url = url;
+            this.data = data;
+            this.onFinish = onFinish;
+            this.onError = onError;
+            this.timeout = timeout;
+        }
+
+    }
+
+    /**
+     * Entry をつくる
+     */
+    public static class EntryBuilder {
+
+        private URL url;
+        private Map<String, Object> data;
+        private Consumer<Integer> onFinish;
+        private Consumer<Exception> onError;
+        private int timeout;
+
+        public EntryBuilder() {
+            this.timeout = -1;
+        }
+
+        /**
+         * @return POST する内容
+         */
+        @NonNull
+        public Entry build() {
+            if (this.url == null) {
+                throw new IllegalStateException("null URL");
+            } else if (this.data == null) {
+                throw new IllegalStateException("null data");
+            }
+
+            return new Entry(
+                    this.url,
+                    this.data,
+                    (this.onFinish != null ? this.onFinish : (Integer status) -> Log.v(TAG, "Post resulted in " + status)),
+                    (this.onError != null ? onError : (Exception e) -> Log.e(TAG, "Post failed", e)),
+                    (this.timeout >= 0 ? this.timeout : DEFAULT_TIMEOUT)
+            );
+        }
+
+        /**
+         * @param url POST 先 URL
+         * @return this
+         */
+        public EntryBuilder setUrl(@NonNull URL url) {
+            this.url = url;
+            return this;
+        }
+
+        /**
+         * @param data JSON にして POST するデータ
+         * @return this
+         */
+        public EntryBuilder setData(@NonNull Map<String, Object> data) {
+            this.data = data;
+            return this;
+        }
+
+        /**
+         * @param onFinish POST した後で実行する関数
+         * @return this
+         */
+        public EntryBuilder setOnFinish(@Nullable Consumer<Integer> onFinish) {
+            this.onFinish = onFinish;
+            return this;
+        }
+
+        /**
+         * @param onError エラー発生時に実行する関数
+         * @return this
+         */
+        public EntryBuilder setOnError(@Nullable Consumer<Exception> onError) {
+            this.onError = onError;
+            return this;
+        }
+
+        /**
+         * @param timeout 接続タイムアウト
+         * @return this
+         */
+        public EntryBuilder setTimeout(int timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+    }
+
     private static class JsonPostHandler extends Handler {
 
         private static final int MSG_POST = 0;
 
-        private final URL url;
-        private final int timeout;
-        @NonNull
-        private final Consumer<Integer> onUpload;
-        @NonNull
-        private final Consumer<Exception> onError;
-
-        JsonPostHandler(@NonNull Looper looper, @NonNull URL url, @Nullable Consumer<Integer> onUpload, @Nullable Consumer<Exception> onError, int timeout) {
+        private JsonPostHandler(@NonNull Looper looper) {
             super(looper);
-            this.url = url;
-            this.timeout = timeout;
-            this.onUpload = (onUpload != null ? onUpload : (Integer status) -> Log.v(TAG, "Upload resulted in " + status));
-            this.onError = (onError != null ? onError : (Exception e) -> Log.e(TAG, "Post failed", e));
         }
 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_POST: {
+                    final Entry entry = (Entry) msg.obj;
                     try {
-                        post(this.url, (Map) msg.obj, this.onUpload, this.timeout);
+                        post(entry.url, entry.data, entry.onFinish, entry.timeout);
                     } catch (Exception e) {
-                        this.onError.accept(e);
+                        entry.onError.accept(e);
                     }
                 }
             }
@@ -98,14 +193,14 @@ public class JsonPoster {
         }
 
         /**
-         * @param data  POST させるデータ
+         * @param entry POST する内容
          * @param clear true なら溜まってる分は捨てる
          */
-        void post(@NonNull Map data, boolean clear) {
+        void post(@NonNull Entry entry, boolean clear) {
             if (clear && hasMessages(MSG_POST)) {
                 removeMessages(MSG_POST);
             }
-            sendMessage(obtainMessage(MSG_POST, data));
+            sendMessage(obtainMessage(MSG_POST, entry));
         }
 
     }
@@ -113,29 +208,25 @@ public class JsonPoster {
     private final JsonPostHandler handler;
 
     /**
-     * @param looper   スレッド
-     * @param url      POST 先 URL
-     * @param onUpload アップロード時実行関数。引数はレスポンスステータス
-     * @param onError  エラー時実行関数
-     * @param timeout  接続タイムアウト（ミリ秒）
+     * @param looper スレッド
      */
-    public JsonPoster(@NonNull Looper looper, @NonNull URL url, @NonNull Consumer<Integer> onUpload, @Nullable Consumer<Exception> onError, int timeout) {
-        this.handler = new JsonPostHandler(looper, url, onUpload, onError, timeout);
+    public JsonPoster(@NonNull Looper looper) {
+        this.handler = new JsonPostHandler(looper);
     }
 
     /**
-     * @param data  POST させるデータ
+     * @param entry POST する内容
      * @param clear true なら溜まってる分は捨てる
      */
-    public void post(@NonNull Map data, boolean clear) {
-        this.handler.post(data, clear);
+    public void post(@NonNull Entry entry, boolean clear) {
+        this.handler.post(entry, clear);
     }
 
     /**
-     * post(data, false) と同じ
+     * post(entry, false) と同じ
      */
-    public void post(@NonNull Map data) {
-        this.handler.post(data, false);
+    public void post(@NonNull Entry entry) {
+        this.handler.post(entry, false);
     }
 
 }

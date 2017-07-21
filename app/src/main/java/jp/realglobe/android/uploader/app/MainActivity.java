@@ -37,6 +37,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import jp.realglobe.android.function.Consumer;
 import jp.realglobe.android.uploader.JsonPoster;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.INTERNET,
     };
     private static final int PERMISSION_REQUEST_CODE = 10895;
+
+    private static final TypeReference<?> MAP_TYPE = new TypeReference<Map<String, Object>>() {
+    };
 
     private HandlerThread thread;
 
@@ -71,11 +75,21 @@ public class MainActivity extends AppCompatActivity {
         }
         buttonPost.setOnClickListener((View v) -> {
             try {
+                final JsonPoster poster = new JsonPoster(this.thread.getLooper());
+
                 final URL url = new URL(editUrl.getText().toString());
-                final JsonPoster poster = new JsonPoster(this.thread.getLooper(), url, (Exception e) -> runOnUiThread(() -> showToast(getString(R.string.notification_error, e))), 30_000);
-                final Map<String, Object> data = mapper.readValue(editJson.getText().toString(), new TypeReference<Map<String, Object>>() {
-                });
-                poster.post(data);
+                final Map<String, Object> data = mapper.readValue(editJson.getText().toString(), MAP_TYPE);
+                final Consumer<Integer> onFinish = (Integer status) -> runOnUiThread(() -> showToast(getString(R.string.notification_finish, status)));
+                final Consumer<Exception> onError = (Exception e) -> runOnUiThread(() -> showToast(getString(R.string.notification_error, e)));
+                final JsonPoster.Entry entry = (new JsonPoster.EntryBuilder())
+                        .setUrl(url)
+                        .setData(data)
+                        .setOnFinish(onFinish)
+                        .setOnError(onError)
+                        .setTimeout(30_000)
+                        .build();
+
+                poster.post(entry);
             } catch (IOException e) {
                 showToast(getString(R.string.notification_error, e));
             }

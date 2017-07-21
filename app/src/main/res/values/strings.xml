@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Uploader</string>
     <string name="notification_error">エラーが発生しました: %s</string>
+    <string name="notification_finish">完了しました: レスポンス %d</string>
     <string name="notification_permissions">実行に必要な権限がありません。システム設定から許可してください</string>
     <string name="post">POST</string>
     <string name="post_json_object">POSTするJSONオブジェクト</string>
