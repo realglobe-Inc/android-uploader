@@ -22,28 +22,24 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import org.json.JSONObject;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Map;
 
 import jp.realglobe.android.function.Consumer;
 import jp.realglobe.android.logger.simple.Log;
 
 /**
- * JSON を HTTP POST する。
+ * HTTP POST する。
  * Created by fukuchidaisuke on 17/07/05.
  */
-public class JsonPoster {
+public class Poster {
 
-    private static final String TAG = JsonPoster.class.getName();
-
-    private static final String CONTENT_TYPE = "Content-Type";
-    private static final String CONTENT_TYPE_JSON = "application/json";
+    private static final String TAG = Poster.class.getName();
 
     private static final int DEFAULT_TIMEOUT = 30_000; // ミリ秒
 
@@ -53,14 +49,16 @@ public class JsonPoster {
     public static class Entry {
 
         private final URL url;
-        private final Map<String, Object> data;
+        private final byte[] data;
+        private final Map<String, String> header;
         private final Consumer<Integer> onFinish;
         private final Consumer<Exception> onError;
         private final int timeout;
 
-        private Entry(@NonNull URL url, @NonNull Map<String, Object> data, @NonNull Consumer<Integer> onFinish, @NonNull Consumer<Exception> onError, int timeout) {
+        private Entry(@NonNull URL url, @Nullable byte[] data, @NonNull Map<String, String> header, @NonNull Consumer<Integer> onFinish, @NonNull Consumer<Exception> onError, int timeout) {
             this.url = url;
             this.data = data;
+            this.header = header;
             this.onFinish = onFinish;
             this.onError = onError;
             this.timeout = timeout;
@@ -74,7 +72,8 @@ public class JsonPoster {
     public static class EntryBuilder {
 
         private URL url;
-        private Map<String, Object> data;
+        private byte[] data;
+        private Map<String, String> header;
         private Consumer<Integer> onFinish;
         private Consumer<Exception> onError;
         private int timeout;
@@ -90,13 +89,12 @@ public class JsonPoster {
         public Entry build() {
             if (this.url == null) {
                 throw new IllegalStateException("null URL");
-            } else if (this.data == null) {
-                throw new IllegalStateException("null data");
             }
 
             return new Entry(
                     this.url,
                     this.data,
+                    (this.header != null ? this.header : Collections.emptyMap()),
                     (this.onFinish != null ? this.onFinish : (Integer status) -> Log.v(TAG, "Post resulted in " + status)),
                     (this.onError != null ? onError : (Exception e) -> Log.e(TAG, "Post failed", e)),
                     (this.timeout >= 0 ? this.timeout : DEFAULT_TIMEOUT)
@@ -113,11 +111,20 @@ public class JsonPoster {
         }
 
         /**
-         * @param data JSON にして POST するデータ
+         * @param data POST するデータ
          * @return this
          */
-        public EntryBuilder setData(@NonNull Map<String, Object> data) {
+        public EntryBuilder setData(@Nullable byte[] data) {
             this.data = data;
+            return this;
+        }
+
+        /**
+         * @param header HTTP ヘッダ
+         * @return this
+         */
+        public EntryBuilder setHeader(@Nullable Map<String, String> header) {
+            this.header = header;
             return this;
         }
 
@@ -150,11 +157,11 @@ public class JsonPoster {
 
     }
 
-    private static class JsonPostHandler extends Handler {
+    private static class PostHandler extends Handler {
 
         private static final int MSG_POST = 0;
 
-        private JsonPostHandler(@NonNull Looper looper) {
+        private PostHandler(@NonNull Looper looper) {
             super(looper);
         }
 
@@ -164,7 +171,7 @@ public class JsonPoster {
                 case MSG_POST: {
                     final Entry entry = (Entry) msg.obj;
                     try {
-                        post(entry.url, entry.data, entry.onFinish, entry.timeout);
+                        post(entry);
                     } catch (Exception e) {
                         entry.onError.accept(e);
                     }
@@ -172,21 +179,23 @@ public class JsonPoster {
             }
         }
 
-        private static void post(@NonNull URL url, @NonNull Map data, @NonNull Consumer<Integer> onFinish, int timeout) throws IOException {
-            final String json = (new JSONObject(data)).toString();
-            final byte[] bytes = json.getBytes();
-            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        private static void post(@NonNull Entry entry) throws IOException {
+            final HttpURLConnection connection = (HttpURLConnection) entry.url.openConnection();
             try {
-                connection.setConnectTimeout(timeout);
-                connection.setDoOutput(true);
+                connection.setConnectTimeout(entry.timeout);
+                connection.setDoOutput(entry.data != null);
                 connection.setDoInput(false);
-                connection.setRequestProperty(CONTENT_TYPE, CONTENT_TYPE_JSON);
+                for (final Map.Entry<String, String> header : entry.header.entrySet()) {
+                    connection.setRequestProperty(header.getKey(), header.getValue());
+                }
                 connection.connect();
 
-                try (final OutputStream reqBody = new BufferedOutputStream(connection.getOutputStream())) {
-                    reqBody.write(bytes);
+                if (entry.data != null) {
+                    try (final OutputStream reqBody = new BufferedOutputStream(connection.getOutputStream())) {
+                        reqBody.write(entry.data);
+                    }
                 }
-                onFinish.accept(connection.getResponseCode());
+                entry.onFinish.accept(connection.getResponseCode());
             } finally {
                 connection.disconnect();
             }
@@ -205,13 +214,13 @@ public class JsonPoster {
 
     }
 
-    private final JsonPostHandler handler;
+    private final PostHandler handler;
 
     /**
      * @param looper スレッド
      */
-    public JsonPoster(@NonNull Looper looper) {
-        this.handler = new JsonPostHandler(looper);
+    public Poster(@NonNull Looper looper) {
+        this.handler = new PostHandler(looper);
     }
 
     /**
