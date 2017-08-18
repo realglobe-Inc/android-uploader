@@ -38,7 +38,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jp.realglobe.android.function.Consumer;
-import jp.realglobe.android.uploader.JsonPoster;
+import jp.realglobe.android.uploader.JsonEntryBuilder;
+import jp.realglobe.android.uploader.Poster;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -75,13 +76,13 @@ public class MainActivity extends AppCompatActivity {
         }
         buttonPost.setOnClickListener((View v) -> {
             try {
-                final JsonPoster poster = new JsonPoster(this.thread.getLooper());
+                final Poster poster = new Poster(this.thread.getLooper());
 
                 final URL url = new URL(editUrl.getText().toString());
                 final Map<String, Object> data = mapper.readValue(editJson.getText().toString(), MAP_TYPE);
                 final Consumer<Integer> onFinish = (Integer status) -> runOnUiThread(() -> showToast(getString(R.string.notification_finish, status)));
                 final Consumer<Exception> onError = (Exception e) -> runOnUiThread(() -> showToast(getString(R.string.notification_error, e)));
-                final JsonPoster.Entry entry = (new JsonPoster.EntryBuilder())
+                final Poster.Entry entry = (new JsonEntryBuilder())
                         .setUrl(url)
                         .setData(data)
                         .setOnFinish(onFinish)

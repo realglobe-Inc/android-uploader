@@ -3,7 +3,7 @@ apply plugin: 'me.tatarka.retrolambda'
 
 def artifactGroupId = 'jp.realglobe'
 def artifactArtifactId = 'android-uploader'
-def artifactVersion = '1.0.0'
+def artifactVersion = '2.0.0'
 def artifactName = 'Uploader'
 def artifactDescription = 'Uploader'
 def artifactUrl = "https://github.com/realglobe-Inc/${artifactArtifactId}"
@@ -36,7 +36,7 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
-    compile 'jp.realglobe:android-lib:3.0.0'
+    compile 'jp.realglobe:android-lib:4.0.0'
 
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
