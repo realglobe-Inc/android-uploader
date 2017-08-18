@@ -35,18 +35,18 @@ public class JsonEntryBuilder {
     private static final String CONTENT_TYPE = "Content-Type";
     private static final String CONTENT_TYPE_JSON = "application/json";
 
-    private static final Map<String, String> header;
+    private static final Map<String, String> requiredHeader;
 
     static {
-        header = new HashMap<>();
-        header.put(CONTENT_TYPE, CONTENT_TYPE_JSON);
+        requiredHeader = new HashMap<>();
+        requiredHeader.put(CONTENT_TYPE, CONTENT_TYPE_JSON);
     }
 
     private Poster.EntryBuilder builder;
 
     public JsonEntryBuilder() {
         this.builder = new Poster.EntryBuilder();
-        this.builder.setHeader(header);
+        this.builder.setHeader(requiredHeader);
     }
 
     /**
@@ -72,6 +72,22 @@ public class JsonEntryBuilder {
      */
     public JsonEntryBuilder setData(@NonNull Map<String, Object> data) {
         this.builder.setData((new JSONObject(data)).toString().getBytes());
+        return this;
+    }
+
+    /**
+     * @param header HTTP ヘッダ
+     * @return this
+     */
+    public JsonEntryBuilder setHeader(@Nullable Map<String, String> header) {
+        if (header == null) {
+            this.builder.setHeader(requiredHeader);
+            return this;
+        }
+
+        final Map<String, String> allHeader = new HashMap<>(header);
+        allHeader.putAll(requiredHeader);
+        this.builder.setHeader(allHeader);
         return this;
     }
 
