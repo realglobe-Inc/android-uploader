@@ -30,7 +30,7 @@ import jp.realglobe.android.function.Consumer;
 /**
  * JSON で POST する Entry をつくる
  */
-public class JsonEntryBuilder {
+public class JsonEntryBuilder implements Poster.EntryBuilder {
 
     private static final String CONTENT_TYPE = "Content-Type";
     private static final String CONTENT_TYPE_JSON = "application/json";
@@ -42,16 +42,17 @@ public class JsonEntryBuilder {
         requiredHeader.put(CONTENT_TYPE, CONTENT_TYPE_JSON);
     }
 
-    private Poster.EntryBuilder builder;
+    private Poster.BasicEntryBuilder builder;
 
     public JsonEntryBuilder() {
-        this.builder = new Poster.EntryBuilder();
+        this.builder = new Poster.BasicEntryBuilder();
         this.builder.setHeader(requiredHeader);
     }
 
     /**
      * @return POST する内容
      */
+    @Override
     @NonNull
     public Poster.Entry build() {
         return this.builder.build();
