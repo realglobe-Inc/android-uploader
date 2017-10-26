@@ -94,7 +94,7 @@ task javadoc(type: Javadoc) {
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 
     options {
-        links('http://docs.oracle.com/javase/jp/8/docs/api/', 'https://developer.android.com/reference/');
+        links('http://docs.oracle.com/javase/jp/8/docs/api/', 'https://developer.android.com/reference/')
         setMemberLevel(JavadocMemberLevel.PROTECTED)
         docEncoding = 'UTF-8'
         encoding = 'UTF-8'
