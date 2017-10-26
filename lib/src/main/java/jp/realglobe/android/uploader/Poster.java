@@ -69,7 +69,17 @@ public class Poster {
     /**
      * Entry をつくる
      */
-    public static class EntryBuilder {
+    public interface EntryBuilder {
+
+        /**
+         * @return POST する内容
+         */
+        @NonNull
+        Entry build();
+
+    }
+
+    public static class BasicEntryBuilder implements EntryBuilder {
 
         private URL url;
         private byte[] data;
@@ -78,13 +88,11 @@ public class Poster {
         private Consumer<Exception> onError;
         private int timeout;
 
-        public EntryBuilder() {
+        public BasicEntryBuilder() {
             this.timeout = -1;
         }
 
-        /**
-         * @return POST する内容
-         */
+        @Override
         @NonNull
         public Entry build() {
             if (this.url == null) {
@@ -105,7 +113,7 @@ public class Poster {
          * @param url POST 先 URL
          * @return this
          */
-        public EntryBuilder setUrl(@NonNull URL url) {
+        public BasicEntryBuilder setUrl(@NonNull URL url) {
             this.url = url;
             return this;
         }
@@ -114,7 +122,7 @@ public class Poster {
          * @param data POST するデータ
          * @return this
          */
-        public EntryBuilder setData(@Nullable byte[] data) {
+        public BasicEntryBuilder setData(@Nullable byte[] data) {
             this.data = data;
             return this;
         }
@@ -123,7 +131,7 @@ public class Poster {
          * @param header HTTP ヘッダ
          * @return this
          */
-        public EntryBuilder setHeader(@Nullable Map<String, String> header) {
+        public BasicEntryBuilder setHeader(@Nullable Map<String, String> header) {
             this.header = header;
             return this;
         }
@@ -132,7 +140,7 @@ public class Poster {
          * @param onFinish POST した後で実行する関数
          * @return this
          */
-        public EntryBuilder setOnFinish(@Nullable Consumer<Integer> onFinish) {
+        public BasicEntryBuilder setOnFinish(@Nullable Consumer<Integer> onFinish) {
             this.onFinish = onFinish;
             return this;
         }
@@ -141,7 +149,7 @@ public class Poster {
          * @param onError エラー発生時に実行する関数
          * @return this
          */
-        public EntryBuilder setOnError(@Nullable Consumer<Exception> onError) {
+        public BasicEntryBuilder setOnError(@Nullable Consumer<Exception> onError) {
             this.onError = onError;
             return this;
         }
@@ -150,7 +158,7 @@ public class Poster {
          * @param timeout 接続タイムアウト
          * @return this
          */
-        public EntryBuilder setTimeout(int timeout) {
+        public BasicEntryBuilder setTimeout(int timeout) {
             this.timeout = timeout;
             return this;
         }

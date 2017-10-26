@@ -61,8 +61,8 @@ public class MainActivity extends AppCompatActivity {
         this.thread = new HandlerThread(getClass().getName());
         this.thread.start();
 
-        final EditText editUrl = (EditText) findViewById(R.id.edit_url);
-        final EditText editJson = (EditText) findViewById(R.id.edit_json);
+        final EditText editUrl = findViewById(R.id.edit_url);
+        final EditText editJson = findViewById(R.id.edit_json);
         final View buttonPost = findViewById(R.id.button_post);
 
         final ObjectMapper mapper = new ObjectMapper();

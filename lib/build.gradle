@@ -1,16 +1,15 @@
 apply plugin: 'com.android.library'
-apply plugin: 'me.tatarka.retrolambda'
 
 def artifactGroupId = 'jp.realglobe'
 def artifactArtifactId = 'android-uploader'
-def artifactVersion = '2.0.0'
+def artifactVersion = '3.0.0'
 def artifactName = 'Uploader'
 def artifactDescription = 'Uploader'
 def artifactUrl = "https://github.com/realglobe-Inc/${artifactArtifactId}"
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.0"
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         minSdkVersion 19
@@ -35,8 +34,8 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
-    compile 'jp.realglobe:android-lib:4.0.0'
+    compile 'com.android.support:appcompat-v7:26.1.0'
+    compile 'jp.realglobe:android-lib:5.0.1'
 
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
@@ -95,7 +94,7 @@ task javadoc(type: Javadoc) {
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 
     options {
-        links('http://docs.oracle.com/javase/jp/8/docs/api/', 'https://developer.android.com/reference/');
+        links('http://docs.oracle.com/javase/jp/8/docs/api/', 'https://developer.android.com/reference/')
         setMemberLevel(JavadocMemberLevel.PROTECTED)
         docEncoding = 'UTF-8'
         encoding = 'UTF-8'
