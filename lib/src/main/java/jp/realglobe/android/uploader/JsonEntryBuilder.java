@@ -62,6 +62,7 @@ public class JsonEntryBuilder implements Poster.EntryBuilder {
      * @param url POST 先 URL
      * @return this
      */
+    @NonNull
     public JsonEntryBuilder setUrl(@NonNull URL url) {
         this.builder.setUrl(url);
         return this;
@@ -71,6 +72,7 @@ public class JsonEntryBuilder implements Poster.EntryBuilder {
      * @param data JSON にして POST するデータ
      * @return this
      */
+    @NonNull
     public JsonEntryBuilder setData(@NonNull Map<String, Object> data) {
         this.builder.setData((new JSONObject(data)).toString().getBytes());
         return this;
@@ -80,6 +82,7 @@ public class JsonEntryBuilder implements Poster.EntryBuilder {
      * @param header HTTP ヘッダ
      * @return this
      */
+    @NonNull
     public JsonEntryBuilder setHeader(@Nullable Map<String, String> header) {
         if (header == null) {
             this.builder.setHeader(requiredHeader);
@@ -96,6 +99,7 @@ public class JsonEntryBuilder implements Poster.EntryBuilder {
      * @param onFinish POST した後で実行する関数
      * @return this
      */
+    @NonNull
     public JsonEntryBuilder setOnFinish(@Nullable Consumer<Integer> onFinish) {
         this.builder.setOnFinish(onFinish);
         return this;
@@ -105,6 +109,7 @@ public class JsonEntryBuilder implements Poster.EntryBuilder {
      * @param onError エラー発生時に実行する関数
      * @return this
      */
+    @NonNull
     public JsonEntryBuilder setOnError(@Nullable Consumer<Exception> onError) {
         this.builder.setOnError(onError);
         return this;
@@ -114,6 +119,7 @@ public class JsonEntryBuilder implements Poster.EntryBuilder {
      * @param timeout 接続タイムアウト
      * @return this
      */
+    @NonNull
     public JsonEntryBuilder setTimeout(int timeout) {
         this.builder.setTimeout(timeout);
         return this;
