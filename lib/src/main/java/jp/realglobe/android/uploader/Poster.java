@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import jp.realglobe.android.function.Consumer;
-import jp.realglobe.android.logger.simple.Log;
+import jp.realglobe.android.function.Functions;
 
 /**
  * HTTP POST する。
