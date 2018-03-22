@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import jp.realglobe.android.function.Consumer;
-import jp.realglobe.android.logger.simple.Log;
+import jp.realglobe.android.function.Functions;
 
 /**
  * HTTP POST する。
@@ -55,13 +55,13 @@ public class Poster {
         private final Consumer<Exception> onError;
         private final int timeout;
 
-        private Entry(@NonNull URL url, @Nullable byte[] data, @NonNull Map<String, String> header, @NonNull Consumer<Integer> onFinish, @NonNull Consumer<Exception> onError, int timeout) {
+        private Entry(@NonNull URL url, @Nullable byte[] data, @Nullable Map<String, String> header, @Nullable Consumer<Integer> onFinish, @Nullable Consumer<Exception> onError, int timeout) {
             this.url = url;
             this.data = data;
-            this.header = header;
-            this.onFinish = onFinish;
-            this.onError = onError;
-            this.timeout = timeout;
+            this.header = (header != null ? header : Collections.emptyMap());
+            this.onFinish = (onFinish != null ? onFinish : Functions::nop);
+            this.onError = (onError != null ? onError : Functions::nop);
+            this.timeout = (timeout >= 0 ? timeout : DEFAULT_TIMEOUT);
         }
 
     }
@@ -99,14 +99,7 @@ public class Poster {
                 throw new IllegalStateException("null URL");
             }
 
-            return new Entry(
-                    this.url,
-                    this.data,
-                    (this.header != null ? this.header : Collections.emptyMap()),
-                    (this.onFinish != null ? this.onFinish : (Integer status) -> Log.v(TAG, "Post resulted in " + status)),
-                    (this.onError != null ? onError : (Exception e) -> Log.e(TAG, "Post failed", e)),
-                    (this.timeout >= 0 ? this.timeout : DEFAULT_TIMEOUT)
-            );
+            return new Entry(this.url, this.data, this.header, this.onFinish, this.onError, this.timeout);
         }
 
         /**
