@@ -55,7 +55,14 @@ public class Poster {
         private final Consumer<Exception> onError;
         private final int timeout;
 
-        private Entry(@NonNull URL url, @Nullable byte[] data, @Nullable Map<String, String> header, @Nullable Consumer<Integer> onFinish, @Nullable Consumer<Exception> onError, int timeout) {
+        private Entry(
+                @NonNull URL url,
+                @Nullable byte[] data,
+                @Nullable Map<String, String> header,
+                @Nullable Consumer<Integer> onFinish,
+                @Nullable Consumer<Exception> onError,
+                int timeout
+        ) {
             this.url = url;
             this.data = data;
             this.header = (header != null ? header : Collections.emptyMap());
