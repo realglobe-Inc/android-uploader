@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         buttonPost.setOnClickListener((View v) -> {
             try {
                 final Poster poster = new Poster(this.thread.getLooper());
+                // final Poster poster = new Poster();
 
                 final URL url = new URL(editUrl.getText().toString());
                 final Map<String, Object> data = mapper.readValue(editJson.getText().toString(), MAP_TYPE);
@@ -91,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
                         .build();
 
                 poster.post(entry);
+                // new Handler(thread.getLooper()).post(() -> poster.post(entry));
             } catch (IOException e) {
                 showToast(getString(R.string.notification_error, e));
             }
