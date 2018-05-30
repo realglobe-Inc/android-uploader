@@ -23,7 +23,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.io.BufferedOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -178,34 +177,34 @@ public class Poster {
             switch (msg.what) {
                 case MSG_POST: {
                     final Entry entry = (Entry) msg.obj;
-                    try {
-                        post(entry);
-                    } catch (Exception e) {
-                        entry.onError.accept(e);
-                    }
+                    post(entry);
                 }
             }
         }
 
-        private static void post(@NonNull Entry entry) throws IOException {
-            final HttpURLConnection connection = (HttpURLConnection) entry.url.openConnection();
+        private static void post(@NonNull Entry entry) {
             try {
-                connection.setConnectTimeout(entry.timeout);
-                connection.setDoOutput(entry.data != null);
-                connection.setDoInput(false);
-                for (final Map.Entry<String, String> header : entry.header.entrySet()) {
-                    connection.setRequestProperty(header.getKey(), header.getValue());
-                }
-                connection.connect();
-
-                if (entry.data != null) {
-                    try (final OutputStream reqBody = new BufferedOutputStream(connection.getOutputStream())) {
-                        reqBody.write(entry.data);
+                final HttpURLConnection connection = (HttpURLConnection) entry.url.openConnection();
+                try {
+                    connection.setConnectTimeout(entry.timeout);
+                    connection.setDoOutput(entry.data != null);
+                    connection.setDoInput(false);
+                    for (final Map.Entry<String, String> header : entry.header.entrySet()) {
+                        connection.setRequestProperty(header.getKey(), header.getValue());
                     }
+                    connection.connect();
+
+                    if (entry.data != null) {
+                        try (final OutputStream reqBody = new BufferedOutputStream(connection.getOutputStream())) {
+                            reqBody.write(entry.data);
+                        }
+                    }
+                    entry.onFinish.accept(connection.getResponseCode());
+                } finally {
+                    connection.disconnect();
                 }
-                entry.onFinish.accept(connection.getResponseCode());
-            } finally {
-                connection.disconnect();
+            } catch (Exception e) {
+                entry.onError.accept(e);
             }
         }
 
@@ -225,17 +224,34 @@ public class Poster {
     private final PostHandler handler;
 
     /**
-     * @param looper スレッド
+     * @param looper 送信スレッド。
+     *               null の場合、post を実行したスレッドで送信処理を行うインスタンスをつくる
      */
-    public Poster(@NonNull Looper looper) {
-        this.handler = new PostHandler(looper);
+    public Poster(@Nullable Looper looper) {
+        this.handler = (looper == null ? null : new PostHandler(looper));
     }
 
     /**
+     * Poster(null) と同じ
+     */
+    public Poster() {
+        this(null);
+    }
+
+    /**
+     * 送信する。
+     * 初期化時に送信スレッドを指定している場合、送信終了を待たずに返る。
+     * 初期化時に送信スレッドを指定していなければ、送信終了までブロックする。
+     *
      * @param entry POST する内容
-     * @param clear true なら溜まってる分は捨てる
+     * @param clear 送信スレッドを指定している場合、true なら溜まってる分を捨てる。
+     *              送信スレッドを指定していない場合、意味無し
      */
     public void post(@NonNull Entry entry, boolean clear) {
+        if (this.handler == null) {
+            PostHandler.post(entry);
+            return;
+        }
         this.handler.post(entry, clear);
     }
 
@@ -243,7 +259,7 @@ public class Poster {
      * post(entry, false) と同じ
      */
     public void post(@NonNull Entry entry) {
-        this.handler.post(entry, false);
+        post(entry, false);
     }
 
 }
