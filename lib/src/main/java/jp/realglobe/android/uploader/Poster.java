@@ -173,11 +173,9 @@ public class Poster {
 
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_POST: {
-                    final Entry entry = (Entry) msg.obj;
-                    post(entry);
-                }
+            if (msg.what == MSG_POST) {
+                final Entry entry = (Entry) msg.obj;
+                post(entry);
             }
         }
 
