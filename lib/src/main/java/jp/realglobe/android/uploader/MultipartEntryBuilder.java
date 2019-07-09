@@ -160,7 +160,7 @@ public class MultipartEntryBuilder implements Poster.EntryBuilder {
      */
     @NonNull
     public MultipartEntryBuilder setHeader(@Nullable Map<String, String> header) {
-        this.header = new HashMap<>(header);
+        this.header = header == null ? new HashMap<>() : new HashMap<>(header);
         return this;
     }
 
