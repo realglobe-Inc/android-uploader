@@ -19,8 +19,9 @@ package jp.realglobe.android.uploader;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.OutputStream;
