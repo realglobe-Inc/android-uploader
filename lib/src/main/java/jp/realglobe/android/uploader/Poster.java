@@ -39,8 +39,6 @@ import jp.realglobe.android.function.Functions;
  */
 public class Poster {
 
-    private static final String TAG = Poster.class.getName();
-
     private static final int DEFAULT_TIMEOUT = 30_000; // ミリ秒
 
     /**
